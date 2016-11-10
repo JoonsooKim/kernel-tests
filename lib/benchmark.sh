@@ -40,6 +40,7 @@ benchmark_begin()
 	watchdog_run
 	setup_log_system "$KERNEL" "$LOG_PREFIX"
 	run_system $KERNEL
+	periodic_log_run
 	setup_system
 	dump_log begin
 }
@@ -55,6 +56,7 @@ benchmark_do()
 benchmark_end()
 {
 	dump_log end
+	periodic_log_stop
 	shutdown_system
 	watchdog_stop
 }

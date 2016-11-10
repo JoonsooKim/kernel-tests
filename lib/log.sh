@@ -11,6 +11,10 @@ LOGS=( "vmstat, cat /proc/vmstat" "meminfo, cat /proc/meminfo"	\
 
 dump_env()
 {
+	local I
+	local NR_LOGS
+	local ENTRY
+
 	echo "-----------------------"
 	echo "REPEAT: $OPT_REPEAT"
 	echo "SEQUENCE: $OPT_SEQUENCE"
@@ -21,6 +25,13 @@ dump_env()
 	echo "KERNEL_PARAM: $OPT_KERNEL_PARAM"
 	echo "ZRAM_SIZE: $OPT_ZRAM_SIZE"
 	echo "WATCHDOG_SEC: $OPT_WATCHDOG_SEC"
+
+	NR_LOGS=${#OPT_LOGS_PERIODIC[@]}
+	for I in `seq 0 $(($NR_LOGS-1))`; do
+		ENTRY=${OPT_LOGS_PERIODIC[$I]}
+		echo "PERIODIC_LOG: $ENTRY"
+	done
+
 	echo -e "-----------------------\n"
 }
 
@@ -39,6 +50,7 @@ setup_log_system()
 	mkdir -p $LOG_DIR &> /dev/null
 	LOG_ENV="$LOG_DIR/env.log"
 	LOG_BENCHMARK="$LOG_DIR/benchmark.log"
+	LOG_PERIODIC="$LOG_DIR/*-periodic.log"
 
 	clear_log
 	dump_env
@@ -89,4 +101,46 @@ clear_log()
 	done
 	rm -f $LOG_ENV
 	rm -f $LOG_BENCHMARK
+	rm -f $LOG_PERIODIC
+}
+
+periodic_log()
+{
+	local SEC="$1"
+	local ENTRY="$2"
+	local PID
+	local NR_LOGS
+
+	setup_log_file "$ENTRY" "periodic"
+	exec_cmd_silent "while sleep $SEC; do $LOG_CMD; done" > $LOG_FILE &
+
+	PID=$!
+	NR_LOGS=${#LOGS_PERIODIC_PID[@]}
+	LOGS_PERIODIC_PID[$NR_LOGS]=$PID
+}
+
+periodic_log_run()
+{
+	local I
+	local NR_LOGS=${#OPT_LOGS_PERIODIC[@]}
+	local ENTRY
+
+	for I in `seq 0 $(($NR_LOGS-1))`; do
+		ENTRY=${OPT_LOGS_PERIODIC[$I]}
+		periodic_log 1 "$ENTRY"
+	done
+}
+
+periodic_log_stop()
+{
+	local I
+	local PID
+	local NR_LOGS=${#LOGS_PERIODIC_PID[@]}
+
+	for I in `seq 0 $(($NR_LOGS-1))`; do
+		PID=${LOGS_PERIODIC_PID[$I]}
+		kill $PID
+	done
+
+	sleep 1
 }
