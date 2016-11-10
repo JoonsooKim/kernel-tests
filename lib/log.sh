@@ -20,6 +20,7 @@ dump_env()
 	echo "TAG: $OPT_TAG"
 	echo "KERNEL_PARAM: $OPT_KERNEL_PARAM"
 	echo "ZRAM_SIZE: $OPT_ZRAM_SIZE"
+	echo "WATCHDOG_SEC: $OPT_WATCHDOG_SEC"
 	echo -e "-----------------------\n"
 }
 

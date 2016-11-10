@@ -17,7 +17,7 @@ usage()
 
 setup_options()
 {
-	local LONGOPTS="help,repeat:,sequence:,kernel:,benchmark:,mem:,tag:,param:,zram_size:"
+	local LONGOPTS="help,repeat:,sequence:,kernel:,benchmark:,mem:,tag:,param:,zram_size:,watchdog_sec:"
 	local ARGS=`getopt --longoptions $LONGOPTS -- "$@"`
 	local NR_KERNELS
 
@@ -41,6 +41,8 @@ setup_options()
 			OPT_KERNEL_PARAM="$2"; shift 2;;
 		--zram_size)
 			OPT_ZRAM_SIZE=$2; shift 2;;
+		--watchdog_sec)
+			OPT_WATCHDOG_SEC=$2; shift 2;;
 		--)
 			break;;
 		*)

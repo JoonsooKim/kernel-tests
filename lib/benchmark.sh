@@ -3,6 +3,7 @@
 source lib/system.sh
 source lib/options.sh
 source lib/log.sh
+source lib/watchdog.sh
 
 setup_swap_zram()
 {
@@ -36,6 +37,7 @@ benchmark_begin()
 		LOG_PREFIX="unknown"
 	fi
 
+	watchdog_run
 	setup_log_system "$KERNEL" "$LOG_PREFIX"
 	run_system $KERNEL
 	setup_system
@@ -54,4 +56,5 @@ benchmark_end()
 {
 	dump_log end
 	shutdown_system
+	watchdog_stop
 }
