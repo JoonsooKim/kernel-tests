@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LONGOPTS="option_file:,help,repeat:,sequence:,kernel:,benchmark:,mem:,tag:,param:,zram_size:,watchdog_sec:,periodic_log:"
+
 OPT_BENCHMARK=""
 OPT_KERNEL=""
 OPT_REPEAT=1
@@ -15,10 +17,35 @@ usage()
 	exit 0;
 }
 
-setup_options()
+do_option_file()
 {
-	local LONGOPTS="help,repeat:,sequence:,kernel:,benchmark:,mem:,tag:,param:,zram_size:,watchdog_sec:,periodic_log:"
-	local ARGS=`getopt --longoptions $LONGOPTS -- "$@"`
+	local FILE="$1"
+
+	while read -r LINE || [[ -n "$LINE" ]]; do
+		eval set -- "$LINE"
+		setup_option "$1" "$2"
+	done < "$FILE"
+}
+
+setup_option_file()
+{
+	while true; do
+		case "$1" in
+		--option_file)
+			do_option_file "$2"
+			shift 2;;
+		*)
+			if [ "$1" == "" ]; then
+				break;
+			fi
+
+			shift 1;;
+		esac
+	done
+}
+
+setup_option()
+{
 	local NR_KERNELS
 
 	while true; do
@@ -49,18 +76,36 @@ setup_options()
 		--)
 			break;;
 		*)
-			break;;
+			if [ "$1" == "" ]; then
+				break;
+			fi
+
+			shift 1;;
 		esac
 	done
+}
 
+check_option()
+{
 	if [ "$OPT_KERNEL" == "" ] || [ "$OPT_BENCHMARK" == "" ]; then
 		echo "Invalid argument"
 		exit 1
 	fi
+}
 
+setup_option_post()
+{
 	if [ "$OPT_SEQUENCE" == "" ]; then
 		OPT_SEQUENCE=`seq -s " " 1 $OPT_REPEAT`
 	fi
 
 	OPT_JOB_FILE="$BENCHMARK_DIR/$OPT_BENCHMARK.sh"
+}
+
+setup_options()
+{
+	setup_option_file "$@"
+	setup_option "$@"
+	setup_option_post
+	check_option
 }
