@@ -3,7 +3,6 @@
 LONGOPTS="option_file:,help,repeat:,sequence:,kernel:,benchmark:,mem:,tag:,param:,zram_size:,watchdog_sec:,periodic_log:"
 
 OPT_BENCHMARK=""
-OPT_KERNEL=""
 OPT_REPEAT=1
 OPT_SEQUENCE=""
 OPT_MEM=4096
@@ -46,8 +45,6 @@ setup_option_file()
 
 setup_option()
 {
-	local NR_KERNELS
-
 	while true; do
 		case "$1" in
 		--help)
@@ -57,7 +54,8 @@ setup_option()
 		--sequence)
 			OPT_SEQUENCE="$2"; shift 2;;
 		--kernel)
-			OPT_KERNEL=( "$2" ); shift 2;;
+			local NR_KERNELS=${#OPT_KERNEL[@]}
+			OPT_KERNEL[$NR_KERNELS]="$2"; shift 2;;
 		--benchmark)
 			OPT_BENCHMARK=$2; shift 2;;
 		--mem)
@@ -87,7 +85,9 @@ setup_option()
 
 check_option()
 {
-	if [ "$OPT_KERNEL" == "" ] || [ "$OPT_BENCHMARK" == "" ]; then
+	local NR_KERNELS=${#OPT_KERNEL[@]}
+
+	if [ "$NR_KERNELS" == "0" ] || [ "$OPT_BENCHMARK" == "" ]; then
 		echo "Invalid argument"
 		exit 1
 	fi

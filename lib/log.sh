@@ -12,13 +12,19 @@ LOGS=( "vmstat, cat /proc/vmstat" "meminfo, cat /proc/meminfo"	\
 dump_env()
 {
 	local I
-	local NR_LOGS
+	local NR
 	local ENTRY
 
 	echo "-----------------------"
 	echo "REPEAT: $OPT_REPEAT"
 	echo "SEQUENCE: $OPT_SEQUENCE"
-	echo "KERNEL: $OPT_KERNEL"
+
+	NR=${#OPT_KERNEL[@]}
+	for I in `seq 0 $(($NR-1))`; do
+		ENTRY=${OPT_KERNEL[$I]}
+		echo "KERNEL: $ENTRY"
+	done
+
 	echo "BENCHMARK: $OPT_BENCHMARK"
 	echo "MEM: $OPT_MEM"
 	echo "TAG: $OPT_TAG"
@@ -26,8 +32,8 @@ dump_env()
 	echo "ZRAM_SIZE: $OPT_ZRAM_SIZE"
 	echo "WATCHDOG_SEC: $OPT_WATCHDOG_SEC"
 
-	NR_LOGS=${#OPT_LOGS_PERIODIC[@]}
-	for I in `seq 0 $(($NR_LOGS-1))`; do
+	NR=${#OPT_LOGS_PERIODIC[@]}
+	for I in `seq 0 $(($NR-1))`; do
 		ENTRY=${OPT_LOGS_PERIODIC[$I]}
 		echo "PERIODIC_LOG: $ENTRY"
 	done
