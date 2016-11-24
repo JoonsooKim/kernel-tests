@@ -1,9 +1,0 @@
-set terminal png
-set output arg3
-set y2tics
-make_title(x, y, z) = sprintf("%s for %s-%d", x, y, z)
-
-plot for [i=arg7:arg8] \
-	arg1 usin 1:i with linespoint title make_title(arg4, arg5, i), \
-	for [i=arg7:arg8] \
-	arg2 using 1:i with linespoint title make_title(arg4, arg6, i)
