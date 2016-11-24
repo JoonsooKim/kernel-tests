@@ -112,13 +112,13 @@ clear_log()
 
 periodic_log()
 {
-	local SEC="$1"
+	local INTERVAL="$1"
 	local ENTRY="$2"
 	local PID
 	local NR_LOGS
 
 	setup_log_file "$ENTRY" "periodic"
-	exec_cmd_silent "while sleep $SEC; do $LOG_CMD; done" > $LOG_FILE &
+	exec_cmd_silent "while sleep $INTERVAL; do echo -n 'DATE: '; date +%s; $LOG_CMD; done" > $LOG_FILE &
 
 	PID=$!
 	NR_LOGS=${#LOGS_PERIODIC_PID[@]}
