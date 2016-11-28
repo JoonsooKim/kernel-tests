@@ -19,8 +19,13 @@ usage()
 do_option_file()
 {
 	local FILE="$1"
+	local COMMENT
 
 	while read -r LINE || [[ -n "$LINE" ]]; do
+		COMMENT=`echo "$LINE" | grep "^#" | wc -l`
+		if [ "$COMMENT" == "1" ]; then
+			continue
+		fi
 		eval set -- "$LINE"
 		setup_option "$1" "$2"
 	done < "$FILE"
