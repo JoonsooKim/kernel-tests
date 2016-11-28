@@ -118,7 +118,7 @@ periodic_log()
 	local NR_LOGS
 
 	setup_log_file "$ENTRY" "periodic"
-	exec_cmd_silent "while sleep $INTERVAL; do echo -n 'DATE: '; date +%s; $LOG_CMD; done" > $LOG_FILE &
+	exec_cmd_silent "while sleep $INTERVAL; do echo -n 'DATE: '; cat /proc/uptime | awk '{print int(\$1)}'; $LOG_CMD; done" > $LOG_FILE &
 
 	PID=$!
 	NR_LOGS=${#LOGS_PERIODIC_PID[@]}
