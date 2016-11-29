@@ -2,7 +2,6 @@
 
 source lib/options.sh
 
-OPTGRAPH_TYPE=csv
 OPTGRAPH_OUTPUT_FILE=`mktemp -u`.png
 OPTGRAPH_COL_BEGIN=0
 OPTGRAPH_COL_END=0
@@ -11,8 +10,20 @@ setup_periodic_graph_option()
 {
 	while true; do
 		case "$1" in
-		--type)
-			OPTGRAPH_TYPE=$2
+		--key_index)
+			OPTGRAPH_KEY_INDEX=$2
+			shift 2;;
+		--base_dir)
+			OPTGRAPH_BASE_DIR=$2
+			shift 2;;
+		--compare_dir)
+			OPTGRAPH_COMPARE_DIR=$2
+			shift 2;;
+		--input_file)
+			OPTGRAPH_INPUT_FILE=$2
+			shift 2;;
+		--input_number)
+			OPTGRAPH_INPUT_NUMBER=$2
 			shift 2;;
 		--base_files)
 			OPTGRAPH_BASE_FILES="$2"
@@ -20,7 +31,7 @@ setup_periodic_graph_option()
 		--compare_files)
 			OPTGRAPH_COMPARE_FILES="$2"
 			shift 2;;
-		--ouput_file)
+		--output_file)
 			OPTGRAPH_OUTPUT_FILE=$2
 			shift 2;;
 		--column_begin)
@@ -42,6 +53,94 @@ setup_periodic_graph_option()
 	done
 }
 
+setup_periodic_graph_files()
+{
+	local DIR=$1
+	local FILE
+	local FILES
+	local I
+
+	for I in `seq 1 $OPTGRAPH_INPUT_NUMBER`; do
+		FILE=$DIR/$I/$OPTGRAPH_INPUT_FILE
+		if [ -f $FILE ]; then
+			FILES="$FILES $FILE"
+		fi
+	done
+
+	echo "$FILES"
+}
+
+setup_periodic_graph_option_post()
+{
+	if [ "$OPTGRAPH_INPUT_FILE" == "" ]; then
+		return
+	fi
+
+	if [ "$OPTGRAPH_INPUT_NUMBER" == "" ]; then
+		return
+	fi
+
+	if [ "$OPTGRAPH_BASE_DIR" != "" ]; then
+		OPTGRAPH_BASE_FILES=`setup_periodic_graph_files $OPTGRAPH_BASE_DIR`
+	fi
+
+	if [ "$OPTGRAPH_COMPARE_DIR" != "" ]; then
+		OPTGRAPH_COMPARE_FILES=`setup_periodic_graph_files $OPTGRAPH_COMPARE_DIR`
+	fi
+
+	if [ "$OPTGRAPH_BASE_FILES" == "" ] || [ "$OPTGRAPH_COMPARE_FILES" == "" ]; then
+		echo "Invalid input"
+		exit 1
+	fi
+}
+
+normalize_data()
+{
+	local FILE=$1
+	local KEY_IDX=$2
+	local NORMALIZED_FILE
+
+	NORMALIZED_FILE=`mktemp`
+	awk -v KEY_IDX=$KEY_IDX '
+	{
+		if (match($1, /DATE:/)) {
+			print $0
+			next
+		}
+
+		for (i = KEY_IDX + 1; i <= NF; i++) {
+			if (match($i, /^[0-9]+$/) ||
+				match($i, /^[0-9]+[.][0-9]+$/)) {
+				printf ("%s-V%d %s\n", $KEY_IDX, i, $i)
+			}
+		}
+	}
+	' $FILE > $NORMALIZED_FILE
+
+	echo $NORMALIZED_FILE
+}
+
+normalize_files()
+{
+	local FILES="$1"
+	local KEY_IDX=$2
+	local FILE
+	local NORMALIZED_FILE
+	local NORMALIZED_FILES
+
+	if [ "$KEY_IDX" == "" ]; then
+		echo "$FILES"
+		return
+	fi
+
+	for FILE in $FILES; do
+		NORMALIZED_FILE=`normalize_data $FILE $KEY_IDX`
+		NORMALIZED_FILES="$NORMALIZED_FILES $NORMALIZED_FILE"
+	done
+
+	echo $NORMALIZED_FILES
+}
+
 paste_data()
 {
 	local FILES="$1"
@@ -60,24 +159,25 @@ average_data()
 
 	AVERAGE_FILE=`mktemp`
 	awk '
-		{
-			if (match($1, /DATE:/)) {
-				print $1 " " $2
-				next
-			}
-
-			printf ("%s", $1)
-
-			count = 0
-			sum = 0
-			for (i = 2; i <= NF; i++) {
-				if (match($i, /^[0-9]+$/)) {
-					sum += strtonum($i)
-					count++
-				}
-			}
-			printf (" %d\n", sum/count)
+	{
+		if (match($1, /DATE:/)) {
+			print $1 " " $2
+			next
 		}
+
+		printf ("%s", $1)
+
+		count = 0
+		sum = 0
+		for (i = 2; i <= NF; i++) {
+			if (match($i, /^[0-9]+$/) ||
+				match($i, /^[0-9]+[.][0-9]+$/)) {
+				sum += strtonum($i)
+				count++
+			}
+		}
+		printf (" %f\n", sum/count)
+	}
 	' $FILE > $AVERAGE_FILE
 
 	echo $AVERAGE_FILE
@@ -166,22 +266,26 @@ setup_graph_options()
 {
 	setup_option_file "$@"
 	setup_periodic_graph_option "$@"
+	setup_periodic_graph_option_post
+
+	echo "OPTGRAPH_BASE_FILES: $OPTGRAPH_BASE_FILES"
+	echo "OPTGRAPH_COMPARE_FILES: $OPTGRAPH_COMPARE_FILES"
 }
 
 setup_graph_options "$@"
 
-echo "OPTGRAPH_BASE_FILES: $OPTGRAPH_BASE_FILES"
-GRAPH_BASE_FILE=`paste_data "$OPTGRAPH_BASE_FILES"`
+GRAPH_BASE_NORMALIZED_FILES=`normalize_files "$OPTGRAPH_BASE_FILES" $OPTGRAPH_KEY_INDEX`
+GRAPH_BASE_FILE=`paste_data "$GRAPH_BASE_NORMALIZED_FILES"`
 GRAPH_BASE_FILE=`average_data $GRAPH_BASE_FILE`
 GRAPH_BASE_FILE=`filtered_data $GRAPH_BASE_FILE "$OPTGRAPH_GREP_OPTION"`
 GRAPH_BASE_FILE=`transform_data $GRAPH_BASE_FILE`
 
-echo "OPTGRAPH_COMPARE_FILES: $OPTGRAPH_COMPARE_FILES"
-GRAPH_COMPARE_FILE=`paste_data "$OPTGRAPH_COMPARE_FILES"`
+GRAPH_COMPARE_NORMALIZED_FILES=`normalize_files "$OPTGRAPH_COMPARE_FILES" $OPTGRAPH_KEY_INDEX`
+GRAPH_COMPARE_FILE=`paste_data "$GRAPH_COMPARE_NORMALIZED_FILES"`
 GRAPH_COMPARE_FILE=`average_data $GRAPH_COMPARE_FILE`
 GRAPH_COMPARE_FILE=`filtered_data $GRAPH_COMPARE_FILE "$OPTGRAPH_GREP_OPTION"`
 GRAPH_COMPARE_FILE=`transform_data $GRAPH_COMPARE_FILE`
 
 
 echo "Graph will be generated at $OPTGRAPH_OUTPUT_FILE"
-Rscript lib/graph-line.R $OPTGRAPH_TYPE $GRAPH_BASE_FILE $GRAPH_COMPARE_FILE $OPTGRAPH_OUTPUT_FILE $OPTGRAPH_COL_BEGIN $OPTGRAPH_COL_END
+Rscript lib/graph-line.R csv $GRAPH_BASE_FILE $GRAPH_COMPARE_FILE $OPTGRAPH_OUTPUT_FILE $OPTGRAPH_COL_BEGIN $OPTGRAPH_COL_END
