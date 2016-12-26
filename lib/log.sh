@@ -32,12 +32,19 @@ dump_env()
 	echo "ZRAM_SIZE: $OPT_ZRAM_SIZE"
 	echo "WATCHDOG_SEC: $OPT_WATCHDOG_SEC"
 
+	NR=${#LOGS[@]}
+	for I in `seq 0 $(($NR-1))`; do
+		ENTRY=${LOGS[$I]}
+		echo "LOG: $ENTRY"
+	done
+
 	NR=${#OPT_LOGS_PERIODIC[@]}
 	for I in `seq 0 $(($NR-1))`; do
 		ENTRY=${OPT_LOGS_PERIODIC[$I]}
 		echo "PERIODIC_LOG: $ENTRY"
 	done
 
+	echo "LOG_DIR: $LOG_DIR"
 	echo -e "-----------------------\n"
 }
 
