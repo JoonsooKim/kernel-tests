@@ -7,7 +7,8 @@ DIR=result-fragmentation-$BENCH_TYPE
 
 # "name,cmd" for each entry
 LOGS=( "vmstat, cat /proc/vmstat" "meminfo, cat /proc/meminfo"	\
-	"pagetypeinfo, cat /proc/pagetypeinfo" "dmesg, sudo dmesg -c" )
+	"pagetypeinfo, cat /proc/pagetypeinfo" "dmesg, sudo dmesg -c" \
+	"zoneinfo, cat /proc/zoneinfo")
 
 dump_env()
 {
