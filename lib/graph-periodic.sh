@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Sample Command
+# bash lib/graph-periodic.sh
+#	--base_dir "log/fragmentation-build/768/default/bzImage-kcompactd"
+#	--input_file "fraginfo-periodic.log"
+#	--compare_dir "log/fragmentation-build/768/default/bzImage-base"
+#	--input_number 5
+#	--output_file test.png
+#	--key_index 4
+
 source lib/options.sh
 
 OPTGRAPH_OUTPUT_FILE=`mktemp -u`.png
