@@ -73,6 +73,8 @@ setup_option()
 			OPT_ZRAM_SIZE=$2; shift 2;;
 		--watchdog_sec)
 			OPT_WATCHDOG_SEC=$2; shift 2;;
+		--log)
+			add_log "$2"; shift 2;;
 		--periodic_log)
 			local NR_LOGS=${#OPT_LOGS_PERIODIC[@]}
 			OPT_LOGS_PERIODIC[$NR_LOGS]="$2"; shift 2;;
