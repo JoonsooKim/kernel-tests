@@ -203,7 +203,7 @@ filtered_data()
 		return
 	else
 		FILTERED_FILE=`mktemp`
-		grep -e "DATE:" $GREP_OP $PASTED_FILE > $FILTERED_FILE
+		grep -e "DATE:" $GREP_OP $FILE > $FILTERED_FILE
 	fi
 
 	echo $FILTERED_FILE
